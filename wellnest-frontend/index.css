@@ -1,0 +1,21 @@
+/* Home / Index page styles */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #000;
+  color: #fff;
+}
+.topbar {
+  background: #c46d2c;
+  padding: 12px 20px;
+}
+.topbar a { color: #fff; text-decoration: none; margin-right: 12px; }
+.container { max-width: 1100px; margin: 100px auto 40px; padding: 0 20px; }
+.hero h1 { font-size: 48px; margin: 8px 0; color: #fff; }
+.hero p { color: #ddd; font-size: 16px; line-height: 1.6; }
+.btn-primary { background:#c46d2c; color:#fff; padding:10px 18px; border-radius:6px; text-decoration:none; }
+.section { margin-top:40px; }
+.footer { margin: 40px 0; color:#bbb; font-size:13px; }
+
+/* Make links visible on white backgrounds if any */
+a { color: #1e90ff; }

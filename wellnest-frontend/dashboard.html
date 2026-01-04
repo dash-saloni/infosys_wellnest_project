@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - WellNest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #000;
+            background: radial-gradient(circle at top, #0f3d1e 0%, #000000 85%);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header / Nav */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(24, 176, 70, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(24, 176, 70, 0.1);
+            border: 1px solid #18b046;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #18b046;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            color: #f4f4f4;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #18b046;
+        }
+
+        .nav-logout {
+            cursor: pointer;
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 100px auto 40px;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            margin-bottom: 40px;
+        }
+
+        .welcome-section h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .welcome-section h1 span {
+            color: #18b046;
+        }
+
+        .welcome-section p {
+            color: #aaa;
+            font-size: 14px;
+            max-width: 650px;
+            line-height: 1.5;
+        }
+
+        /* Cards Row */
+        .cards-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            flex: 1 1 300px;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .card:hover {
+            border-color: #18b046;
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            color: #18b046;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-content {
+            font-size: 14px;
+            color: #ddd;
+            flex: 1;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #aaa;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .user-badge {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 4px 12px;
+            background: rgba(24, 176, 70, 0.2);
+            color: #18b046;
+            font-size: 11px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .buttons-row {
+            margin-top: auto;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #18b046;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+
+        .action-btn:hover {
+            background: #14932a;
+        }
+
+        .secondary-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: transparent;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #fff;
+        }
+
+        /* Charts */
+        .chart-container-full {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container-full h3 {
+            color: #18b046;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Bottom Grid (Water/Sleep) */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .info-panel h3 {
+            color: #18b046;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            background: rgba(255, 255, 255, 0.1);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #18b046;
+            border-radius: 6px;
+            width: 0%;
+            /* JS will animate */
+            transition: width 1s ease;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Sleep List */
+        .sleep-list ul {
+            list-style: none;
+        }
+
+        .sleep-list li {
+            font-size: 14px;
+            color: #ddd;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sleep-list li::before {
+            content: "•";
+            color: #fff;
+            margin-right: 10px;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        /* Goals Section */
+        .goals-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .goals-section h3 {
+            color: #18b046;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .goal-item {
+            margin-bottom: 20px;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        .goal-track {
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .goal-fill {
+            background: #18b046;
+            height: 100%;
+            border-radius: 4px;
+            width: 0%;
+            /* JS will animate */
+            transition: width 1s ease;
+        }
+
+        .goal-status {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            padding: 20px;
+            color: #444;
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .cards-row {
+                flex-direction: column;
+            }
+
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .secondary-btn,
+            .action-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo-badge">WELLNEST</div>
+            <nav class="nav-links">
+                <a href="index.html">HOME</a>
+                <a href="about.html">ABOUT US</a>
+                <a href="tracker.html">TRACKER</a>
+                <a href="health-tools.html">HEALTH TOOLS</a>
+                <a class="nav-logout" id="logoutBtn">LOGOUT</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+
+        <!-- Welcome -->
+        <div class="welcome-section">
+            <h1>Welcome back, <span id="welcomeName">WellNester</span> 👋</h1>
+            <p>Here’s your central hub. Track workouts & meals, update water and sleep logs, and explore BMI & daily
+                help tips — all in one place.</p>
+        </div>
+
+        <!-- Cards Row -->
+        <div class="cards-row">
+            <!-- Overview -->
+            <div class="card">
+                <h3>Today's Overview</h3>
+                <div class="card-content">
+                    <div class="stat-row">
+                        <span class="stat-label">Goal:</span>
+                        <span class="stat-value" id="goalText">Lose Weight</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Age:</span>
+                        <span class="stat-value" id="ageText">25</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Weight:</span>
+                        <span class="stat-value" id="weightText">70 kg</span>
+                    </div>
+                    <div class="stat-row" style="border-bottom: none;">
+                        <span class="stat-label">Calories Burned:</span>
+                        <span class="stat-value" id="caloriesText">2,150</span>
+                    </div>
+                </div>
+                <div class="user-badge" id="roleBadge">USER</div>
+                <p style="margin-top: 15px; font-size: 12px; color: #666;">Tip: make sure your profile details are
+                    updated to get more accurate analytics.</p>
+            </div>
+
+            <!-- Tracker Links -->
+            <div class="card">
+                <h3>Health Tracker</h3>
+                <p class="card-desc">Log workouts, meals, water intake, and sleep — exactly like in your tracker screen.
+                </p>
+                <div class="buttons-row">
+                    <a href="tracker.html" class="action-btn">OPEN HEALTH TRACKER</a>
+                    <a href="tracker.html" class="secondary-btn">View today's logs</a>
+                </div>
+            </div>
+
+            <!-- Tools Links -->
+            <div class="card">
+                <h3>Health Tools</h3>
+                <p class="card-desc">Use your BMI calculator & daily health tips.</p>
+                <div class="buttons-row">
+                    <a href="health-tools.html" class="action-btn">OPEN HEALTH TOOLS</a>
+                    <a href="health-tools.html" class="secondary-btn">Jump to BMI Calculator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 1: Workout Duration -->
+        <div class="chart-container-full">
+            <h3>Workout Duration (Last 7 Days)</h3>
+            <div class="chart-wrapper">
+                <canvas id="workoutChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Calories Trend -->
+        <div class="chart-container-full">
+            <h3>Calories Burned Trend</h3>
+            <div class="chart-wrapper">
+                <canvas id="caloriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Water & Sleep -->
+        <div class="bottom-grid">
+            <!-- Water -->
+            <div class="info-panel">
+                <h3>Daily Water Intake</h3>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: 70%;"></div>
+                </div>
+                <p class="progress-label">1.8L / 2.5L</p>
+            </div>
+
+            <!-- Sleep -->
+            <div class="info-panel">
+                <h3>Sleep Summary</h3>
+                <div class="sleep-list">
+                    <ul>
+                        <li>Mon: 7 hours</li>
+                        <li>Tue: 6 hours</li>
+                        <li>Wed: 8 hours</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goals Section -->
+        <div class="goals-section">
+            <h3>Goals Progress</h3>
+
+            <div class="goal-item">
+                <div class="goal-header">
+                    <span>Daily Steps Goal</span>
+                    <span>8,234 / 10,000</span>
+                </div>
+                <div class="goal-track">
+                    <div class="goal-fill" style="width: 82%;"></div>
+                </div>
+                <div class="goal-status">Keep it up! You're almost there.</div>
+            </div>
+
+            <div class="goal-item">
+                <div class="goal-header">
+                    <span>Weekly Exercise Goal</span>
+                    <span>3 / 5 days</span>
+                </div>
+                <div class="goal-track">
+                    <div class="goal-fill" style="width: 60%;"></div>
+                </div>
+                <div class="goal-status">2 more days to reach your weekly target.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>© 2025 WellNest – Smart Health & Fitness Companion</p>
+    </footer>
+
+    <script src="dashboard.js?v=1.1"></script>
+</body>
+
+</html>

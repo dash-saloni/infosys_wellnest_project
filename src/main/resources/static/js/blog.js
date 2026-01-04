@@ -1,0 +1,796 @@
+const API_BASE_URL = 'http://localhost:8081/api';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type') || 'FEATURED';
+    fetchPosts(type);
+    setupEventListeners();
+    setupRoleBasedUI();
+});
+
+function setupRoleBasedUI() {
+    const role = localStorage.getItem('role');
+    const categorySelect = document.getElementById('postCategory');
+    // Logic for role-based UI can be expanded here
+}
+
+let allPosts = []; // Local cache
+
+async function fetchPosts(type) {
+    const list = document.getElementById('postsList');
+    list.innerHTML = '<p style="text-align:center; color:#666; grid-column: 1 / -1;">Loading...</p>';
+
+    // Update Tab UI
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.dataset.type === type) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+
+    // Reset layout class (Default is grid)
+    // Reset layout class
+    if (type === 'ALL_TRAINER_ARTICLES') {
+        list.className = ''; // Remove layout class for custom community view
+    } else if (type === 'FEATURED') {
+        list.className = 'vertical-grid'; // Use vertical grid for Featured as well
+    } else {
+        list.className = 'vertical-grid'; // Use standard vertical grid for All Posts, My Posts, etc.
+    }
+
+    if (type === 'MY_POSTS') {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const backBtn = document.getElementById('backToDashBtn');
+        if (backBtn) backBtn.style.display = 'block';
+
+        // Hide tabs for My Posts view
+        const tabsContainer = document.querySelector('.blog-tabs');
+        if (tabsContainer) tabsContainer.style.display = 'none';
+
+    } else {
+        const backBtn = document.getElementById('backToDashBtn');
+        if (backBtn) backBtn.style.display = 'none';
+
+        // Show tabs for other views
+        const tabsContainer = document.querySelector('.blog-tabs');
+        if (tabsContainer) tabsContainer.style.display = 'flex';
+    }
+
+    const userEmail = localStorage.getItem('userEmail');
+    let url;
+    let isArticle = false;
+
+    if (type === 'FEATURED') {
+        // "articles matching to users fitness goal"
+        url = `http://localhost:8081/api/articles/recommended?userEmail=${userEmail}`;
+        isArticle = true;
+    } else if (type === 'ALL_TRAINER_ARTICLES') {
+        // Community Tab -> Split View
+        const list = document.getElementById('postsList');
+        list.innerHTML = ''; // Clear
+
+        // 1. User Posts Section
+        const userPostsHeader = document.createElement('h3');
+        userPostsHeader.style.cssText = "color:#18b046; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:20px; grid-column:1/-1;";
+        userPostsHeader.innerText = "User Posts";
+        list.appendChild(userPostsHeader);
+
+        const userPostsContainer = document.createElement('div');
+        userPostsContainer.className = 'vertical-grid'; // Use standard class
+        userPostsContainer.style.cssText = "grid-column:1/-1; margin-bottom:40px;";
+        list.appendChild(userPostsContainer);
+
+        try {
+            const res1 = await fetch(`${API_BASE_URL}/blog?type=USER_POST`);
+            const usersPosts = await res1.json();
+            renderPosts(usersPosts, userPostsContainer, false);
+        } catch (e) {
+            userPostsContainer.innerHTML = '<p style="color:#666;">Failed to load user posts.</p>';
+        }
+
+        // 2. Expert Articles Section
+        const expertHeader = document.createElement('h3');
+        expertHeader.style.cssText = "color:#18b046; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:20px; grid-column:1/-1;";
+        expertHeader.innerText = "Expert Articles";
+        list.appendChild(expertHeader);
+
+        const expertContainer = document.createElement('div');
+        expertContainer.className = 'vertical-grid'; // Use standard class
+        expertContainer.style.cssText = "grid-column:1/-1;";
+        list.appendChild(expertContainer);
+
+        try {
+            const res2 = await fetch(`${API_BASE_URL}/articles`);
+            const articles = await res2.json();
+            renderPosts(articles, expertContainer, true);
+        } catch (e) {
+            expertContainer.innerHTML = '<p style="color:#666;">Failed to load articles.</p>';
+        }
+
+        return; // Stop standard flow
+    } else if (type === 'MY_POSTS') {
+        url = `http://localhost:8081/api/blog/my-posts?email=${userEmail}`;
+    } else if (type === 'TRAINER_HISTORY') {
+        // Trainer History
+        const userId = localStorage.getItem('userId');
+        url = `http://localhost:8081/api/trainer-client/history/${userId}`;
+    } else {
+        // ALL_POSTS -> "under all posts ,the posts generated by all users must be shown"
+        // Also fallback for USER_POST or other types
+        url = `http://localhost:8081/api/blog?type=USER_POST`;
+    }
+
+    try {
+        const headers = {};
+        const token = localStorage.getItem('token');
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json(); // Array
+
+        if (type === 'TRAINER_HISTORY') {
+            renderHistory(data, document.getElementById('postsList'));
+        } else {
+            allPosts = data; // Update cache
+            renderPosts(data, document.getElementById('postsList'), isArticle);
+        }
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = '<p style="text-align:center; color:red; grid-column: 1 / -1;">Failed to load data.</p>';
+    }
+}
+
+async function cancelRequest(id) {
+    if (!confirm("Are you sure you want to cancel this request?")) return;
+    try {
+        const res = await fetch(`http://localhost:8081/api/trainer-client/cancel/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            alert("Request cancelled.");
+            fetchPosts('TRAINER_HISTORY'); // Refresh
+        } else {
+            alert("Failed to cancel.");
+        }
+    } catch (e) { console.error(e); }
+}
+
+function renderHistory(items, container) {
+    container.innerHTML = '';
+    // Use a simple list layout for history
+    container.className = '';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '15px';
+
+    if (items.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666;">No history found.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        // Inline styles for history card to ensure it looks good immediately
+        div.style.cssText = `
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            transition: all 0.3s ease;
+        `;
+
+        div.onmouseover = () => div.style.borderColor = '#18b046';
+        div.onmouseout = () => div.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        const trainerName = item.trainer ? item.trainer.name : 'Unknown Trainer';
+        const specialization = item.trainer ? item.trainer.specialization : 'General';
+        const status = item.status || 'UNKNOWN';
+
+        let statusColor = '#999';
+        let statusBg = 'rgba(255,255,255,0.1)';
+
+        if (status === 'ACTIVE') { statusColor = '#18b046'; statusBg = 'rgba(24, 176, 70, 0.2)'; }
+        else if (status === 'PENDING') { statusColor = '#ff9800'; statusBg = 'rgba(255, 152, 0, 0.2)'; }
+        else if (status === 'CANCELLED' || status === 'REJECTED') { statusColor = '#d32f2f'; statusBg = 'rgba(211, 47, 47, 0.2)'; }
+
+        let actionHtml = '';
+        if (status === 'PENDING') {
+            actionHtml = `<button onclick="cancelRequest(${item.id})" class="btn-action-sm btn-delete">Cancel Request</button>`;
+        } else if (status === 'ACTIVE') {
+            actionHtml = `<button onclick="cancelRequest(${item.id})" class="btn-action-sm btn-delete" style="background:transparent; border:1px solid #d32f2f; color:#d32f2f;">Cancel Enrollment</button>`;
+        } else {
+            actionHtml = `<span style="font-size:12px; color:#666; font-style:italic;">${status}</span>`;
+        }
+
+        div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:40px; height:40px; background:#333; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; border:1px solid #555;">
+                    ${trainerName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <h3 style="color:#fff; margin:0; font-size:16px;">${trainerName}</h3>
+                    <p style="color:#aaa; font-size:13px; margin:4px 0 0 0;">${specialization}</p>
+                </div>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div style="text-align:right;">
+                     <span style="background:${statusBg}; color:${statusColor}; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:bold; letter-spacing:0.5px;">${status}</span>
+                </div>
+                ${actionHtml}
+                <div style="position:relative;">
+                    <button onclick="toggleHistoryMenu(${item.id})" style="background:transparent; border:none; color:#18b046; font-size:24px; cursor:pointer; line-height:1; padding:0 5px;" title="View History">⋮</button>
+                    <div id="hist-menu-${item.id}" class="dropdown-menu" style="right:0; top:100%; min-width:140px; border:1px solid #444;">
+                        <a href="#" onclick="openChatUser(${item.id}, '${trainerName}')">Chats</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function toggleHistoryMenu(id) {
+    const menu = document.getElementById(`hist-menu-${id}`);
+    if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+    } else {
+        // Close others
+        document.querySelectorAll('.dropdown-menu').forEach(d => {
+            if (d.id.startsWith('hist-menu')) d.style.display = 'none';
+            if (d.id === 'myDropdown') d.style.display = 'none'; // Close profile also
+        });
+        menu.style.display = 'block';
+    }
+}
+
+// History Modal Functions for User
+async function openWorkoutUser(relId, trainerName) {
+    document.getElementById('workoutClientName').textContent = trainerName;
+    const titleIn = document.getElementById('workoutTitle');
+    const overviewIn = document.getElementById('workoutOverview');
+    const exercisesIn = document.getElementById('workoutExercises');
+
+    // Reset
+    titleIn.value = ''; overviewIn.value = ''; exercisesIn.value = '';
+    titleIn.placeholder = "Loading...";
+
+    document.getElementById('workoutModal').style.display = 'flex';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/plans/workout/${relId}`, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            const plans = await res.json();
+            if (plans.length > 0) {
+                const p = plans[0];
+                titleIn.value = p.title;
+                overviewIn.value = p.overview;
+                exercisesIn.value = p.exercises;
+            } else {
+                titleIn.placeholder = "No workout assigned yet.";
+            }
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function openDietUser(relId, trainerName) {
+    document.getElementById('dietClientName').textContent = trainerName;
+    const titleIn = document.getElementById('dietTitle');
+    const caloriesIn = document.getElementById('dietCalories');
+    const mealsIn = document.getElementById('dietMeals');
+
+    // Reset
+    titleIn.value = ''; caloriesIn.value = ''; mealsIn.value = '';
+    titleIn.placeholder = "Loading...";
+
+    document.getElementById('dietModal').style.display = 'flex';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/plans/meal/${relId}`, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            const plans = await res.json();
+            if (plans.length > 0) {
+                const p = plans[0];
+                titleIn.value = p.title;
+                caloriesIn.value = p.dailyCalorieTarget;
+                mealsIn.value = p.meals;
+            } else {
+                titleIn.placeholder = "No meal plan assigned yet.";
+            }
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function openChatUser(relId, trainerName) {
+    const box = document.getElementById('trainerChatMessages');
+    document.getElementById('chatClientName').textContent = trainerName;
+    box.innerHTML = '<p style="text-align:center; padding:20px;">Loading...</p>';
+    document.getElementById('chatModal').style.display = 'flex';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/chat/${relId}`, {
+            headers: { "Authorization": "Bearer " + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            const msgs = await res.json();
+            box.innerHTML = '';
+            if (msgs.length === 0) {
+                box.innerHTML = '<p style="text-align:center; padding:20px; color:#aaa;">No messages yet.</p>';
+            }
+            msgs.forEach(msg => {
+                const div = document.createElement("div");
+                // "me" is USER here (since we are in USER portal)
+                // msg.senderType: 'USER' or 'TRAINER'
+                const isMe = (msg.senderType === 'USER');
+
+                div.className = `chat-msg ${isMe ? 'me' : 'them'}`;
+                let timeStr = "";
+                if (msg.sentAt) {
+                    timeStr = new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+                div.innerHTML = `
+                    <div style="margin-bottom:2px;">${msg.message}</div>
+                    <div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 2px;">${timeStr}</div>
+                `;
+                box.appendChild(div);
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+    } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p style="color:red; text-align:center;">Failed to load.</p>';
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function toggleDropdown() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+window.onclick = function (event) {
+    if (!event.target.matches('.profile-icon') && !event.target.matches('.profile-container')) {
+        var dropdowns = document.getElementsByClassName("dropdown-menu");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+}
+
+async function handlePostSubmit() {
+    const id = document.getElementById('postId').value;
+    const title = document.getElementById('postTitle').value;
+    const content = document.getElementById('postContent').value;
+    const category = document.getElementById('postCategory').value;
+
+    const email = localStorage.getItem('userEmail');
+    if (!email) { alert("Please login first."); return; }
+
+    const isEdit = !!id;
+
+    if (isEdit) {
+        // UPDATE (PUT)
+        const payload = { title, content, category, userEmail: email };
+        try {
+            const res = await fetch(`${API_BASE_URL}/blog/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert("Post updated!");
+                closePostModal();
+                fetchPosts('USER_POST');
+            } else {
+                alert("Update failed");
+            }
+        } catch (e) { console.error(e); }
+
+    } else {
+        // CREATE (POST)
+        const form = new FormData();
+        form.append('title', title);
+        form.append('content', content);
+        form.append('category', category);
+        form.append('type', 'USER_POST');
+        form.append('authorEmail', email);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/blog`, {
+                method: 'POST',
+                body: form
+            });
+            if (res.ok) {
+                alert('Published successfully!');
+                closePostModal();
+                fetchPosts('USER_POST');
+            } else {
+                const txt = await res.text();
+                alert('Failed: ' + txt);
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+
+function closePostModal() {
+    document.getElementById('createPostModal').style.display = 'none';
+    document.getElementById('createPostForm').reset();
+    document.getElementById('postId').value = '';
+}
+
+function setupEventListeners() {
+    const modal = document.getElementById('createPostModal');
+    const btn = document.getElementById('openModalBtn');
+    const span = document.getElementById('closeModalBtn');
+
+    if (btn) {
+        btn.onclick = () => {
+            document.getElementById('createPostForm').reset();
+            document.getElementById('postId').value = '';
+            document.querySelector('#createPostModal h2').innerText = "Create New Post";
+            document.getElementById('submitPostBtn').innerText = "PUBLISH POST";
+            modal.style.display = 'flex';
+        };
+    }
+
+    if (span) span.onclick = () => modal.style.display = 'none';
+
+    window.onclick = (e) => {
+        if (e.target == modal) modal.style.display = 'none';
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            fetchPosts(button.dataset.type);
+        });
+    });
+
+    const form = document.getElementById('createPostForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handlePostSubmit();
+        });
+    }
+}
+
+async function deleteUserPost(id) {
+    if (!confirm("Delete this post?")) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/blog/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            fetchPosts('USER_POST');
+        } else {
+            alert("Delete failed.");
+        }
+    } catch (e) { alert(e.message); }
+}
+
+async function editUserPost(id) {
+    const post = allPosts.find(p => p.id === id);
+    if (!post) return;
+
+    document.getElementById('postId').value = post.id;
+    document.getElementById('postTitle').value = post.title;
+    document.getElementById('postContent').value = post.content || post.description;
+    document.getElementById('postCategory').value = post.category || 'General';
+
+    document.querySelector('#createPostModal h2').innerText = "Edit Post";
+    document.getElementById('submitPostBtn').innerText = "UPDATE POST";
+    document.getElementById('createPostModal').style.display = 'flex';
+}
+
+function renderPosts(items, container, isArticle) {
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666;">No posts right now.</p>';
+        return;
+    }
+
+    const currentUserEmail = localStorage.getItem('userEmail');
+
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'post-card';
+
+        // Map fields
+        const title = item.title;
+        // Truncate content for summary if it is an Article (Featured or Community Article)
+        let content = isArticle ? item.description : (item.content || item.description);
+        if (isArticle && content && content.length > 200) {
+            content = content.substring(0, 200) + '...';
+        }
+
+        // Log for debugging
+        console.log("Rendering Blog Post:", item.id, "Author:", item.author);
+        const authorName = isArticle ? (item.trainerName || "Trainer") : (item.author ? (item.author.fullName || item.author.email || "Anonymous") : "Anonymous");
+        const authorEmail = isArticle ? item.trainerEmail : (item.author ? item.author.email : null);
+
+        const date = new Date(item.createdAt).toLocaleDateString();
+        const likes = item.likesCount || 0;
+        const imageUrl = item.imageUrl;
+        const category = isArticle ? (item.specialization || 'Article') : (item.category || 'Post');
+        const commentsCount = item.comments ? item.comments.length : 0;
+
+        // Check Ownership
+        const isOwner = currentUserEmail && authorEmail && (currentUserEmail === authorEmail);
+
+        // Check if Liked by me
+        let isLiked = false;
+        if (item.likedBy && Array.isArray(item.likedBy) && currentUserEmail) {
+            isLiked = item.likedBy.some(u => u.email === currentUserEmail);
+        }
+
+        const badgeColor = isArticle ? '#ff9800' : '#18b046';
+        const avatarLetter = authorName.charAt(0).toUpperCase();
+
+        let deleteBtnHtml = '';
+        if (isOwner && !isArticle) {
+            deleteBtnHtml = `
+                <div class="action-container">
+                     <button onclick="editUserPost(${item.id})" class="btn-action-sm btn-edit">Edit</button>
+                     <button onclick="deleteUserPost(${item.id})" class="btn-action-sm btn-delete">Delete</button>
+                </div>
+            `;
+        }
+
+        // SVG Icons
+        const heartIcon = `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+        const commentIcon = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>`;
+        const shareIcon = `<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>`;
+
+        const actionButtons = `
+            <div class="post-actions">
+                 <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="likePost(${item.id}, '${isArticle ? 'ARTICLE' : 'POST'}', this)">
+                    ${heartIcon} <span style="font-weight:bold;">${likes}</span>
+                 </button>
+                 
+                 <button class="action-btn" onclick="toggleComments(${item.id})">
+                    ${commentIcon} <span style="font-weight:bold;">Comment</span>
+                 </button>
+                 
+                 <button class="action-btn share-btn" onclick="sharePost('${isArticle ? 'ARTICLE' : 'POST'}', ${item.id})">
+                    ${shareIcon}
+                 </button>
+
+                 ${isArticle ? `<a href="article-details.html?id=${item.id}" class="read-more-btn" style="margin-left:auto; color:#18b046; font-size:12px; text-decoration:none; border:1px solid #18b046; padding:6px 12px; border-radius:20px;">Read More →</a>` : ''}
+            </div>
+        `;
+
+        div.innerHTML = `
+            ${imageUrl ? `<img src="${imageUrl}" class="post-cover-img" style="display:block;">` : ''}
+            
+            <div class="post-inner-content">
+                <div class="post-meta">
+                    <div class="post-avatar" style="border-color:${badgeColor}">${avatarLetter}</div>
+                    <span class="post-author">${authorName}</span>
+                    <span>•</span>
+                    <span class="post-category" style="color:${badgeColor}; background:rgba(255,255,255,0.1);">${category}</span>
+                    <span>•</span>
+                    <span>${date}</span>
+                </div>
+
+                <h3 class="post-title">${title}</h3>
+                <p class="post-excerpt">${content}</p>
+
+                ${actionButtons}
+                
+                <div id="comments-${item.id}-${isArticle ? 'ART' : 'POST'}" class="comments-section">
+                    <div class="comments-list" id="comments-list-${item.id}-${isArticle ? 'ART' : 'POST'}">
+                        ${item.comments ? item.comments.map(c => {
+            const isCommentOwner = currentUserEmail && c.author && (c.author.email === currentUserEmail);
+            return `
+                            <div class="comment" id="comment-div-${c.id}" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;">
+                                <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                                    <span class="comment-author" style="font-weight:bold; font-size:12px; color:#18b046;">
+                                        ${c.author ? (c.author.fullName || c.author.email || 'User') : 'User'}
+                                        <span style="font-size:10px; color:#aaa; margin-left:4px; font-weight:normal;">(${c.author && c.author.role ? c.author.role : 'USER'})</span>
+                                    </span>
+                                    <span class="comment-content" style="font-size:13px; color:#ddd;">${c.content}</span>
+                                </div>
+                                ${isCommentOwner ?
+                    `<button onclick="deleteComment(${c.id})" style="background:none; border:none; color:#ef5350; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 10px;" title="Delete Comment">&times;</button>`
+                    : ''}
+                            </div>
+                        `;
+        }).join('') : '<p style="color:#666; font-size:12px;">No comments yet.</p>'}
+                    </div>
+                    
+                    <div class="comment-input-box">
+                        <input type="text" id="comment-input-${item.id}-${isArticle ? 'ART' : 'POST'}" class="comment-input" placeholder="Add a comment...">
+                        <button class="comment-submit" onclick="submitComment(${item.id}, '${isArticle ? 'ARTICLE' : 'POST'}')">Post</button>
+                    </div>
+                </div>
+
+                ${deleteBtnHtml}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ... (Rest of existing functions) ...
+
+async function deleteComment(commentId) {
+    if (!confirm("Delete this comment?")) return;
+    const userEmail = localStorage.getItem('userEmail');
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/comments/${commentId}?userEmail=${encodeURIComponent(userEmail)}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // Remove from DOM
+            const el = document.getElementById(`comment-div-${commentId}`);
+            if (el) el.remove();
+        } else {
+            const txt = await res.text();
+            alert("Failed to delete: " + txt);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error: " + e.message);
+    }
+}
+
+async function likePost(id, type, element) {
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) { alert("Please login to like."); return; }
+
+    console.log(`Liking ${type} ${id} as ${userEmail}`);
+
+    try {
+        let url;
+        if (type === 'ARTICLE') {
+            url = `${API_BASE_URL}/articles/${id}/like?userEmail=${encodeURIComponent(userEmail)}`;
+        } else {
+            url = `${API_BASE_URL}/blog/${id}/like?userEmail=${encodeURIComponent(userEmail)}`;
+        }
+
+        const res = await fetch(url, { method: 'POST' });
+        if (res.ok) {
+            const data = await res.json();
+            console.log("Like success:", data);
+
+            // Update UI
+            const countSpan = element.querySelector('span');
+            if (countSpan) countSpan.textContent = data.likesCount;
+
+            if (data.liked) {
+                element.classList.add('liked');
+            } else {
+                element.classList.remove('liked');
+            }
+        } else {
+            const txt = await res.text();
+            console.error("Like failed:", txt);
+            alert("Failed to like: " + txt);
+        }
+    } catch (e) {
+        console.error("Like Error:", e);
+        alert("Error: " + e.message);
+    }
+}
+
+function toggleComments(id) {
+    // Try both IDs to be safe, or we could pass type. But here we can just querySelector closest/smartly or try both.
+    // For simplicity, let's just accept that we need to find the right one.
+    // Actually, toggleComments is called from onclick w/ just ID.
+    // We need to pass type or try both possible IDs.
+    let section = document.getElementById(`comments-${id}-POST`);
+    if (!section) section = document.getElementById(`comments-${id}-ART`);
+
+    if (section) {
+        if (section.style.display === 'block') {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+        }
+    }
+}
+
+async function submitComment(id, type) {
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) { alert("Please login to comment."); return; }
+
+    const suffix = (type === 'ARTICLE') ? 'ART' : 'POST';
+    const input = document.getElementById(`comment-input-${id}-${suffix}`);
+    if (!input) { console.error("Input not found for", id, suffix); return; }
+
+    const content = input.value.trim();
+    if (!content) return;
+
+    try {
+        let url;
+        if (type === 'ARTICLE') {
+            url = `${API_BASE_URL}/articles/${id}/comment`;
+        } else {
+            url = `${API_BASE_URL}/blog/${id}/comment`;
+        }
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, userEmail })
+        });
+
+        if (res.ok) {
+            const comment = await res.json();
+            // Append comment to list
+            // Append comment to list
+            const list = document.getElementById(`comments-list-${id}-${suffix}`);
+            const div = document.createElement('div');
+            // Use same consistent styling as renderPosts
+            div.className = 'comment';
+            div.id = `comment-div-${comment.id}`;
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;">
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                        <span class="comment-author" style="font-weight:bold; font-size:12px; color:#18b046;">${comment.author ? comment.author.fullName : 'You'}</span>
+                        <span class="comment-content" style="font-size:13px; color:#ddd;">${comment.content}</span>
+                    </div>
+                    <button onclick="deleteComment(${comment.id})" style="background:none; border:none; color:#ef5350; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 10px;" title="Delete Comment">&times;</button>
+                </div>
+            `;
+            // Note: Outer div wrapper might be redundant if inner div has style, but keeping it safe. 
+            // Actually let's clean it up to match exactly.
+            div.style.cssText = "display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.02); border-radius:6px;";
+            div.innerHTML = `
+                 <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                    <span class="comment-author" style="font-weight:bold; font-size:12px; color:#18b046;">
+                        ${comment.author ? comment.author.fullName : 'You'}
+                        <span style="font-size:10px; color:#aaa; margin-left:4px; font-weight:normal;">(${comment.author && comment.author.role ? comment.author.role : 'USER'})</span>
+                    </span>
+                    <span class="comment-content" style="font-size:13px; color:#ddd;">${comment.content}</span>
+                </div>
+                <button onclick="deleteComment(${comment.id})" style="background:none; border:none; color:#ef5350; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 10px;" title="Delete Comment">&times;</button>
+            `;
+            list.appendChild(div);
+
+            // Clear input
+            input.value = '';
+        } else {
+            const txt = await res.text();
+            console.error("Comment failed:", txt);
+            alert("Failed to post comment: " + txt);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error: " + e.message);
+    }
+}
+
+function sharePost(type, id) {
+    const link = window.location.origin + (type === 'ARTICLE' ? `/article-details.html?id=${id}` : `/blog.html?post=${id}`);
+    navigator.clipboard.writeText(link).then(() => {
+        alert("Link copied to clipboard! 🔗");
+    }).catch(err => {
+        alert("Shared! (Link: " + link + ")");
+    });
+}

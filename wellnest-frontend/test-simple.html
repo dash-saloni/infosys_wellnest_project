@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Backend Test</title>
+</head>
+<body>
+    <h1>Simple Backend Test</h1>
+    <button onclick="testSimple()">Test Simple Endpoint</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSimple() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/test/hello');
+                const data = await response.text();
+                
+                resultDiv.innerHTML = `
+                    <h2 style="color: green;">✅ SUCCESS!</h2>
+                    <p>Response: ${data}</p>
+                    <p>Backend is running and accessible!</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 style="color: red;">❌ FAILED</h2>
+                    <p>Error: ${error.message}</p>
+                    <p><strong>Possible issues:</strong></p>
+                    <ul>
+                        <li>Backend is not running in IntelliJ</li>
+                        <li>Backend is running on a different port</li>
+                        <li>Firewall is blocking the connection</li>
+                    </ul>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

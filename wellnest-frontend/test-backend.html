@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Backend Test</title>
+</head>
+
+<body>
+    <h1>Backend Connection Test</h1>
+    <button onclick="testBackend()">Test Backend</button>
+    <div id="result"></div>
+
+    <script>
+        async function testBackend() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fullName: 'Test User',
+                        email: 'test@test.com',
+                        password: '1234',
+                        role: 'USER'
+                    })
+                });
+
+                const data = await response.text();
+                resultDiv.innerHTML = `
+                    <h2>Response Status: ${response.status}</h2>
+                    <p>Response: ${data}</p>
+                    <p style="color: green;">✅ Backend is working!</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 style="color: red;">❌ Error</h2>
+                    <p>${error.message}</p>
+                    <p>Make sure backend is running in IntelliJ!</p>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

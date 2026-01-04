@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - WellNest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        html {
+            overflow-y: scroll;
+            /* Force vertical scrollbar to avoid layout shift */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #000;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8)), url('images/bg-fitness.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(24, 176, 70, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 20px;
+            /* Slight increase to prevent edge cutoff */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(24, 176, 70, 0.1);
+            border: 1px solid #18b046;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #18b046;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            color: #f4f4f4;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            color: #18b046;
+        }
+
+        /* Main Content */
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 20px 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(24, 176, 70, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            color: #18b046;
+        }
+
+        .welcome {
+            font-weight: bold;
+            margin: 0 0 5px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .small {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-top: 15px;
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(24, 176, 70, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #18b046;
+            background: rgba(24, 176, 70, 0.1);
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        .forgot {
+            display: block;
+            text-align: right;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #18b046;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .forgot:hover {
+            text-decoration: underline;
+            color: #14932a;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #18b046;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #14932a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(24, 176, 70, 0.3);
+        }
+
+        .signup-text {
+            font-size: 13px;
+            margin-top: 20px;
+            text-align: center;
+            color: #aaa;
+        }
+
+        .signup-text a {
+            color: #18b046;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .signup-text a:hover {
+            text-decoration: underline;
+            color: #18b046;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.5);
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid rgba(24, 176, 70, 0.2);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 2200;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 250px;
+            height: 100vh;
+            background: #000;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 80px;
+            transition: right 0.3s ease;
+            z-index: 2100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu a {
+            color: #fff;
+            font-size: 16px;
+            text-transform: uppercase;
+            font-weight: bold;
+            padding: 10px 0;
+        }
+
+        .mobile-menu a:hover {
+            color: #18b046;
+        }
+
+        .menu-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: #18b046;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 30px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo-badge">WELLNEST</div>
+            <nav class="nav-links">
+                <a href="index.html">HOME</a>
+                <a href="about.html">ABOUT US</a>
+                <a href="tracker.html">TRACKER</a>
+                <a href="health-tools.html">TOOLS</a>
+                <a href="blog.html">BLOG</a>
+                <a href="trainers.html">TRAINERS</a>
+                <a href="signup.html">SIGN UP</a>
+            </nav>
+
+            <!-- Right Side Hamburger (Wrapped for consistency) -->
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div class="hamburger" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="menu-close-btn" onclick="toggleMobileMenu()">×</div>
+        <a href="index.html">HOME</a>
+        <a href="about.html">ABOUT US</a>
+        <a href="tracker.html">TRACKER</a>
+        <a href="health-tools.html">TOOLS</a>
+        <a href="blog.html">BLOG</a>
+        <a href="trainers.html">TRAINERS</a>
+        <a href="signup.html">SIGN UP</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Login</h2>
+            <p class="welcome">Welcome back</p>
+            <p class="small">Please enter your credentials to access your account.</p>
+
+            <form id="loginForm">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+
+                <a href="forgot-password.html" class="forgot">Forgot Password?</a>
+
+                <button type="button" onclick="login()">Login</button>
+            </form>
+
+            <p class="signup-text">
+                No account? <a href="signup.html">Create an account</a>
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 WellNest – Smart Health & Fitness Companion</p>
+    </footer>
+
+    <script src="/js/login.js"></script>
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.querySelector('.hamburger');
+            menu.classList.toggle('active');
+            icon.classList.toggle('active');
+        }
+    </script>
+</body>
+
+</html>

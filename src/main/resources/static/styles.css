@@ -1,0 +1,427 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    background: #fff;
+    padding: 30px 35px;
+    width: 330px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2 {
+    margin: 0 0 10px;
+}
+
+.welcome {
+    font-weight: bold;
+    margin: 0;
+}
+
+.small {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.forgot {
+    display: block;
+    text-align: right;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #333;
+    text-decoration: none;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background: #c46d2c;  
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.trainer-btn {
+    background: #eeeeee;
+    color: #333;
+}
+
+.signup-text {
+    font-size: 13px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* ---------- DASHBOARD STYLES ---------- */
+
+.dash-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f5;
+}
+
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #c46d2c;
+}
+
+.brand-name {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.user-info-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.logout-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    background: #f0f0f0;
+    font-size: 12px;
+}
+
+.dash-main {
+    display: flex;
+    gap: 20px;
+    padding: 20px 30px 30px;
+}
+
+/* Left profile card */
+
+.profile-card {
+    flex: 1;
+    max-width: 320px;
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 20px 22px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.profile-card h2 {
+    margin-top: 0;
+}
+
+.profile-email {
+    font-size: 14px;
+    color: #555;
+    margin: 5px 0;
+}
+
+.profile-role {
+    font-size: 13px;
+    font-weight: bold;
+    color: #c46d2c;
+    margin-bottom: 15px;
+}
+
+.profile-details {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* Right side cards */
+
+.dash-panels {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.dash-card {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    font-size: 14px;
+}
+
+.dash-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.overview-list {
+    padding-left: 18px;
+    margin: 8px 0 0;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+    .dash-main {
+        flex-direction: column;
+    }
+
+    .profile-card {
+        max-width: 100%;
+    }
+}
+
+/* ------------ HOME PAGE / INDEX STYLES ------------ */
+
+.home-body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: #fff;
+}
+
+/* Top red bar */
+.topbar {
+    background: #c46d2c;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.topbar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-name {
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
+.brand-sub {
+    font-size: 11px;
+}
+
+/* nav links */
+.nav-links {
+    display: flex;
+    gap: 18px;
+    font-size: 14px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.nav-links a:hover,
+.nav-links .nav-login {
+    opacity: 0.85;
+}
+
+.nav-login {
+    border: 1px solid #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+/* HERO SECTION */
+.hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 80px;
+    text-align: center;
+    background:
+        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+        url('images/image.png') center/cover no-repeat;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+}
+
+.hero-content {
+    position: relative;
+    max-width: 700px;
+    padding: 20px;
+}
+
+.hero h1 {
+    font-size: 42px;
+    margin-bottom: 5px;
+}
+
+.hero h1 span {
+    color: #ff4040;
+}
+
+.hero h2 {
+    font-size: 22px;
+    margin: 10px 0 15px;
+    font-weight: 600;
+}
+
+.hero p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #ddd;
+    margin-bottom: 25px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 10px 24px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin: 0 8px;
+}
+
+.btn-primary {
+    background: #c46d2c;
+    color: #fff;
+    border: 1px solid #c46d2c;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+.btn-primary:hover,
+.btn-outline:hover {
+    opacity: 0.9;
+}
+
+/* Sections below hero */
+
+.home-section {
+    padding: 60px 20px;
+    background: #050505;
+    color: #f5f5f5;
+}
+
+.home-section.alt {
+    background: #111;
+}
+
+.section-inner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.home-section h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff4040;
+}
+
+.home-section p {
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.feature-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+}
+
+.footer {
+    text-align: center;
+    padding: 15px 10px;
+    background: #000;
+    font-size: 12px;
+    color: #aaa;
+}
+
+@media (max-width: 768px) {
+    .topbar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0 16px;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+    }
+
+    .hero h1 {
+        font-size: 32px;
+    }
+
+    .hero h2 {
+        font-size: 18px;
+    }
+}

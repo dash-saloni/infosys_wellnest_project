@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Details - WellNest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Shared Dashboard CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #000;
+            background: radial-gradient(circle at top, #0f3d1e 0%, #000000 85%);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: #fff;
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(24, 176, 70, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(24, 176, 70, 0.1);
+            border: 1px solid #18b046;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #18b046;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            color: #f4f4f4;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #18b046;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .article-content-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 20px;
+        }
+
+        .article-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+        }
+
+        .article-img {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .meta {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .title {
+            font-size: 32px;
+            margin: 10px 0;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #ddd;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-top: 50px;
+        }
+
+        /* Social Actions matching Blog */
+        .article-actions {
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px 0;
+            margin: 20px 0;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: #1e222d;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            color: #ccc;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #2a2e38;
+            color: #fff;
+        }
+
+        .action-btn.liked {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .action-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo-badge">WELLNEST</div>
+            <nav class="nav-links">
+                <a href="trainer-home.html">DASHBOARD</a>
+                <a href="trainer-articles.html">ARTICLES</a>
+                <a href="trainer-profile.html">PROFILE</a>
+                <a onclick="logout()">LOGOUT</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" id="mainContainer">
+
+        <!-- Back Button Container -->
+        <div id="backBtnContainer" style="margin-bottom: 20px;"></div>
+
+        <div id="loading" class="loading">Loading Article...</div>
+
+        <div id="articleContent" class="article-content-box" style="display: none;">
+            <img id="artImage" src="" class="article-img" onerror="this.style.display='none'">
+            <div class="article-header">
+                <h1 id="artTitle" class="title"></h1>
+                <div class="meta">
+                    <span id="artSpecialization" style="color: #18b046; font-weight:bold;"></span>
+                    <span>•</span>
+                    <span id="artTrainer"></span>
+                    <span>•</span>
+                    <span id="artDate"></span>
+                </div>
+            </div>
+            <div id="artDesc" class="content"></div>
+        </div>
+    </div>
+
+    <!-- Main Logic -->
+    <script>
+        var ARTICLE_API = '/api/articles';
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Back Button
+            var role = localStorage.getItem('role');
+            var backContainer = document.getElementById('backBtnContainer');
+            if (role === 'TRAINER') {
+                backContainer.innerHTML = '<a href="javascript:history.back()" style="color:#18b046; text-decoration:none; font-weight:bold; font-size:14px;">&larr; BACK</a>';
+            } else {
+                backContainer.innerHTML = '<a href="javascript:history.back()" style="color:#18b046; text-decoration:none; font-weight:bold; font-size:14px;">&larr; BACK</a>';
+            }
+
+            var urlParams = new URLSearchParams(window.location.search);
+            var id = urlParams.get('id');
+
+            if (!id) {
+                document.getElementById('loading').innerText = "Error: Missing ID.";
+                return;
+            }
+
+            fetch(ARTICLE_API + "/" + id)
+                .then(function (res) {
+                    if (!res.ok) throw new Error("Status " + res.status);
+                    return res.json();
+                })
+                .then(function (article) {
+                    var loader = document.getElementById('loading');
+                    if (loader) loader.style.display = 'none';
+
+                    var content = document.getElementById('articleContent');
+                    content.style.display = 'block';
+
+                    // 1. Image
+                    if (article.imageUrl) {
+                        document.getElementById('artImage').src = article.imageUrl;
+                        document.getElementById('artImage').style.display = 'block';
+                    } else {
+                        document.getElementById('artImage').style.display = 'none';
+                    }
+
+                    // 2. Title & 3. Meta (Moved Article Header content inside JS injection or structured in HTML? 
+                    // The HTML has a header div. I will populate it but move it below image in the DOM if needed.
+                    // Actually, the HTML structure already has Image -> Header -> Content.
+                    // I will just populate them.
+
+                    document.getElementById('artTitle').innerText = article.title || "";
+                    document.getElementById('artSpecialization').innerText = article.specialization || "";
+                    document.getElementById('artTrainer').innerText = article.trainerName || article.trainerEmail || "";
+                    if (article.createdAt) {
+                        document.getElementById('artDate').innerText = new Date(article.createdAt).toLocaleDateString();
+                    }
+
+                    // 4. Content
+                    const desc = (article.description || '').trim();
+                    // FIX: Reset whitespace on container to prevent template indentation from rendering as gaps
+                    const artDesc = document.getElementById('artDesc');
+                    artDesc.style.whiteSpace = 'normal';
+
+                    artDesc.innerHTML = `
+                        <div class="article-content" style="line-height:1.6; color:#ddd; font-size:1.1em; margin-bottom:5px; padding-bottom:0; white-space:pre-wrap;">${desc}</div>
+                        <!-- 5. Social Actions -->
+                        <div class="article-actions" style="margin-bottom:20px; padding:2px 0; margin-top:2px; border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
+                             <button class="action-btn ${article.likedBy && article.likedBy.some(u => u.email === localStorage.getItem('userEmail')) ? 'liked' : ''}" onclick="likeArticle(${article.id}, this)">
+                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <span>${article.likesCount} Likes</span>
+                             </button>
+                             <button class="action-btn" onclick="document.getElementById('commentSection').scrollIntoView({behavior: 'smooth'})">
+                                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                                <span>Comment</span>
+                             </button>
+                             <button class="action-btn" onclick="shareArticle()">
+                                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                             </button>
+                        </div>
+                        <!-- 6. Discussion Section -->
+                        <div id="commentSection" style="margin-top:0;">
+                            <!-- Header & Input -->
+                            <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:10px;">
+                                <h3 style="margin:0; color:#fff; font-size:16px;">Discussion</h3>
+                                <div class="comment-input-box" style="background:#111; padding:4px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); display:flex; gap:10px; align-items:center;">
+                                    <input type="text" id="commentInput" placeholder="Add a comment..." style="flex:1; background:transparent; border:none; color:#fff; padding:4px; font-size:13px; outline:none;">
+                                    <button onclick="submitArticleComment(${article.id})" style="background:#18b046; color:#fff; border:none; border-radius:6px; padding:4px 12px; font-weight:bold; font-size:12px; cursor:pointer;">Post</button>
+                                </div>
+                            </div>
+                            <!-- List -->
+                            <div id="commentsList" style="display:flex; flex-direction:column; gap:10px;">
+                                ${renderComments(article.comments, article.trainerEmail)}
+                            </div>
+                        </div>`; // END
+                })
+                .catch(function (err) {
+                    console.error(err);
+                    document.getElementById('loading').innerText = "Error loading article.";
+                });
+        });
+
+        function renderComments(comments, trainerEmail) {
+            if (!comments || comments.length === 0) return '<p style="color:#666; font-style:italic;">No comments yet.</p>';
+
+            const currentUser = localStorage.getItem('userEmail');
+
+            return comments.map(c => {
+                const isAuthor = c.author && c.author.email === currentUser;
+                // const isTrainer = currentUser === trainerEmail; // Removed per user request
+                const canDelete = isAuthor;
+                const dateStr = c.createdAt ? new Date(c.createdAt).toLocaleString() : '';
+                const content = (c.content || '').trim();
+
+                return `
+                    <div class="comment-card" style="background:rgba(255,255,255,0.03); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:5px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="width:20px; height:20px; background:#18b046; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:10px; color:#fff;">
+                                    ${c.author ? c.author.fullName.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <span style="font-weight:600; font-size:13px; color:#fff;">
+                                    ${c.author ? c.author.fullName : 'User'}
+                                    <span style="font-size:10px; color:#aaa; margin-left:4px; font-weight:normal;">(${c.author && c.author.role ? c.author.role : 'USER'})</span>
+                                </span>
+                                <span style="font-size:10px; color:#666;">${dateStr}</span>
+                            </div>
+                            ${canDelete ? `<button onclick="deleteComment(${c.id})" style="background:transparent; border:none; color:#d32f2f; font-size:10px; cursor:pointer; opacity:0.7;">Delete</button>` : ''}
+                        </div>
+                        <div style="color:#ccc; font-size:13px; line-height:1.4; margin:0;">${content}</div>
+                    </div>`.trim(); // Trim template
+            }).join('');
+        }
+
+        async function deleteComment(id) {
+            if (!confirm("Delete this comment?")) return;
+            const userEmail = localStorage.getItem('userEmail');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/comments/${id}?userEmail=${userEmail}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                if (res.ok) {
+                    location.reload(); // Simple reload to refresh comments
+                } else {
+                    const txt = await res.text();
+                    alert("Failed: " + txt);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function likeArticle(id, btn) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) { alert("Login required"); return; }
+            try {
+                const res = await fetch(`http://localhost:8081/api/articles/${id}/like?userEmail=${userEmail}`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const span = btn.querySelector('span');
+                    if (span) span.textContent = `${data.likesCount} Likes`;
+
+                    if (data.liked) {
+                        btn.classList.add('liked');
+                    } else {
+                        btn.classList.remove('liked');
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function shareArticle() {
+            navigator.clipboard.writeText(window.location.href).then(() => alert("Link copied!"));
+        }
+
+        async function submitArticleComment(id) {
+            const userEmail = localStorage.getItem('userEmail');
+            const content = document.getElementById('commentInput').value;
+            if (!content) return;
+
+            try {
+                const res = await fetch(`http://localhost:8081/api/articles/${id}/comment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, userEmail })
+                });
+                if (res.ok) {
+                    // Reload to show new comment with date
+                    location.reload();
+                }
+            } catch (e) { console.error(e); }
+        }
+    </script>
+</body>
+
+</html>
